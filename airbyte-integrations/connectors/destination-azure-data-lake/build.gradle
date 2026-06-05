@@ -1,0 +1,72 @@
+plugins {
+    id 'application'
+    id 'airbyte-bulk-connector'
+    id "io.airbyte.gradle.docker"
+    id 'airbyte-connector-docker-convention'
+}
+
+airbyteBulkConnector {
+    core = 'load'
+    toolkits = ['load-iceberg-parquet']
+}
+
+application {
+    mainClass = 'io.airbyte.integrations.destination.azure_data_lake.AzureDataLakeDestination'
+
+    applicationDefaultJvmArgs = ['-XX:+ExitOnOutOfMemoryError', '-XX:MaxRAMPercentage=75.0']
+
+    // Uncomment and replace to run locally
+    //applicationDefaultJvmArgs = ['-XX:+ExitOnOutOfMemoryError', '-XX:MaxRAMPercentage=75.0', '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED', '--add-opens', 'java.base/sun.security.action=ALL-UNNAMED', '--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+}
+
+ext {
+    apacheIcebergVersion = '1.7.0'
+    junitVersion = '5.11.3'
+}
+
+configurations.configureEach {
+    // Exclude additional SLF4J providers from all classpaths
+    exclude group:"org.slf4j", module:"slf4j-reload4j"
+}
+
+// Uncomment to run locally
+//run {
+//    standardInput = System.in
+//}
+
+dependencies {
+    // Apache Iceberg
+    implementation("org.apache.iceberg:iceberg-api:${project.ext.apacheIcebergVersion}")
+    implementation("org.apache.iceberg:iceberg-core:${project.ext.apacheIcebergVersion}")
+    implementation("org.apache.iceberg:iceberg-data:${project.ext.apacheIcebergVersion}")
+    implementation("org.apache.iceberg:iceberg-azure:${project.ext.apacheIcebergVersion}")
+
+    // Azure SDK (iceberg-azure does not bundle it)
+    implementation(platform("com.azure:azure-sdk-bom:1.2.31"))
+    implementation("com.azure:azure-storage-file-datalake")
+    implementation("com.azure:azure-identity")
+
+    // Logging
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.0")
+
+    // Hadoop (required by Iceberg)
+    implementation("org.apache.hadoop:hadoop-common:3.4.1")
+    implementation("org.apache.hadoop:hadoop-client-api:3.4.1")
+
+    // Micronaut and DI
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+    implementation("com.github.spotbugs:spotbugs-annotations:4.8.6")
+    implementation("io.micronaut:micronaut-inject:4.6.1")
+    implementation("com.kjetland:mbknor-jackson-jsonschema_2.13:1.0.39")
+
+    // Testing
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${project.ext.junitVersion}")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:${project.ext.junitVersion}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${project.ext.junitVersion}")
+
+    // Integration testing
+    integrationTestImplementation("org.apache.iceberg:iceberg-data:${project.ext.apacheIcebergVersion}")
+    integrationTestImplementation("com.squareup.okhttp3:okhttp:4.12.0")
+    integrationTestImplementation("com.azure:azure-storage-file-datalake")
+}

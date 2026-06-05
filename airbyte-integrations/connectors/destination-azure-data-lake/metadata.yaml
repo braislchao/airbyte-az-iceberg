@@ -1,0 +1,42 @@
+data:
+  ab_internal:
+    ql: 200
+    sl: 100
+  connectorBuildOptions:
+    baseImage: docker.io/airbyte/java-connector-base:2.0.3@sha256:119b8506bca069bbc8357a275936c7e2b0994e6947b81f1bf8d6ce9e16db7d47
+  registryOverrides:
+    cloud:
+      enabled: false
+    oss:
+      enabled: false
+  connectorSubtype: file
+  connectorTestSuitesOptions:
+    - suite: unitTests
+    - suite: integrationTests
+  connectorType: destination
+  definitionId: 9e819be3-7190-43b7-a19b-d080b6a3fe46
+  dockerImageTag: 0.1.0
+  dockerRepository: airbyte/destination-azure-data-lake
+  documentationUrl: https://docs.airbyte.com/integrations/destinations/azure-data-lake
+  githubIssueLabel: destination-azure-data-lake
+  icon: icon.svg
+  license: ELv2
+  name: Azure Data Lake
+  releaseStage: alpha
+  supportLevel: community
+  supportsRefreshes: true
+  connectorIPCOptions:
+    dataChannel:
+      version: "0.0.2"
+      supportedSerialization: ["JSONL", "PROTOBUF"]
+      supportedTransport: ["SOCKET", "STDIO"]
+  tags:
+    - language:java
+  externalDocumentationUrls:
+    - title: Azure Data Lake Storage Gen2 documentation
+      url: https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction
+      type: api_reference
+    - title: Authorize access to Azure Storage
+      url: https://learn.microsoft.com/en-us/azure/storage/common/authorize-data-access
+      type: authentication_guide
+metadataSpecVersion: "1.0"

@@ -1,0 +1,40 @@
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    networks:
+      iceberg_net:
+    ports:
+      # We map to a non-default host port to avoid conflicts with other running
+      # integration test containers.
+      - 10010:10000
+    command:
+      [
+        "azurite-blob",
+        "--blobHost",
+        "0.0.0.0",
+        "--blobPort",
+        "10000",
+        "--loose",
+        "--skipApiVersionCheck",
+      ]
+  rest:
+    image: apache/iceberg-rest-fixture
+    networks:
+      iceberg_net:
+    depends_on:
+      - azurite
+    ports:
+      - 8191:8181
+    environment:
+      # Iceberg REST fixture maps env vars CATALOG_X to catalog properties:
+      # strip CATALOG_, then "__" -> "-", "_" -> ".", lowercase.
+      - CATALOG_WAREHOUSE=abfss://warehouse@devstoreaccount1.dfs.core.windows.net/
+      - CATALOG_IO__IMPL=org.apache.iceberg.azure.adlsv2.ADLSFileIO
+      # -> adls.auth.shared-key.account.name / .key (Azurite's well-known dev account)
+      - CATALOG_ADLS_AUTH_SHARED__KEY_ACCOUNT_NAME=devstoreaccount1
+      - CATALOG_ADLS_AUTH_SHARED__KEY_ACCOUNT_KEY=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+      # -> adls.connection-string.devstoreaccount1.dfs.core.windows.net
+      # Iceberg 1.7+ uses this value as the client endpoint, pointing ADLSFileIO at Azurite.
+      - CATALOG_ADLS_CONNECTION__STRING_DEVSTOREACCOUNT1_DFS_CORE_WINDOWS_NET=http://azurite:10000/devstoreaccount1
+networks:
+  iceberg_net:

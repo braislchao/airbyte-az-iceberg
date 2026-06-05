@@ -1,0 +1,125 @@
+{
+  "documentationUrl" : "https://docs.airbyte.com/integrations/destinations/azure-data-lake",
+  "connectionSpecification" : {
+    "$schema" : "http://json-schema.org/draft-07/schema#",
+    "title" : "Azure Data Lake Destination Specification",
+    "type" : "object",
+    "additionalProperties" : true,
+    "description" : "Configuration for Azure Data Lake (ADLS Gen2) destination using Apache Iceberg format",
+    "properties" : {
+      "azure_storage_account_name" : {
+        "type" : "string",
+        "description" : "The name of the Azure storage account (ADLS Gen2) that will host the Iceberg data.",
+        "title" : "Azure Storage Account Name",
+        "always_show" : true,
+        "order" : 0
+      },
+      "azure_storage_account_key" : {
+        "type" : "string",
+        "description" : "The shared key of the Azure storage account. Leave empty to authenticate with a SAS token, or leave all credentials empty to use the default Azure credential chain (environment variables, workload identity or managed identity — recommended when running in AKS).",
+        "title" : "Azure Storage Account Key",
+        "airbyte_secret" : true,
+        "always_show" : true,
+        "order" : 1
+      },
+      "azure_sas_token" : {
+        "type" : "string",
+        "description" : "A shared access signature (SAS) token for the storage account. Only used if no account key is provided.",
+        "title" : "Azure SAS Token",
+        "airbyte_secret" : true,
+        "order" : 2
+      },
+      "azure_endpoint" : {
+        "type" : "string",
+        "description" : "Optional custom endpoint for the storage account, e.g. for a local Azurite emulator: <code>http://localhost:10000/devstoreaccount1</code>. If unset, <code>https://&lt;the storage account host in the warehouse location&gt;</code> is used.",
+        "title" : "Storage Endpoint Override (Advanced)",
+        "order" : 3
+      },
+      "warehouse_location" : {
+        "type" : "string",
+        "description" : "The root location of the data warehouse used by the Iceberg catalog. Must use the \"abfss://\" scheme: \"abfss://<container>@<account>.dfs.core.windows.net/<path>\"",
+        "title" : "Warehouse Location",
+        "examples" : [ "abfss://warehouse@myaccount.dfs.core.windows.net/iceberg" ],
+        "always_show" : true,
+        "order" : 4
+      },
+      "main_branch_name" : {
+        "type" : "string",
+        "description" : "The primary or default branch name in the catalog. Most query engines will use \"main\" by default. See <a href=\"https://iceberg.apache.org/docs/latest/branching/\">Iceberg documentation</a> for more information.",
+        "title" : "Main Branch Name",
+        "order" : 5
+      },
+      "namespace" : {
+        "type" : "string",
+        "description" : "The default namespace to use for tables. This will ONLY be used if the `Destination Namespace` setting is set to `Destination-defined` or `Source-defined`",
+        "title" : "Default Namespace",
+        "examples" : [ "default", "airbyte_data" ],
+        "order" : 6
+      },
+      "catalog_type" : {
+        "oneOf" : [ {
+          "title" : "REST Catalog",
+          "type" : "object",
+          "additionalProperties" : true,
+          "description" : "Configuration for an Iceberg REST catalog.",
+          "properties" : {
+            "catalog_type" : {
+              "type" : "string",
+              "enum" : [ "REST" ],
+              "default" : "REST"
+            },
+            "server_uri" : {
+              "type" : "string",
+              "description" : "The base URL of the Iceberg REST catalog server. For example: http://localhost:8181 or https://catalog.example.com/api/catalog",
+              "title" : "REST Server URI",
+              "order" : 1
+            },
+            "warehouse" : {
+              "type" : "string",
+              "description" : "Optional warehouse identifier to send to the REST catalog (the \"warehouse\" property). Some multi-catalog REST servers (e.g. Polaris, Unity Catalog, Lakekeeper) use this to select the catalog. If unset, the Warehouse Location is sent instead.",
+              "title" : "Warehouse",
+              "order" : 2
+            },
+            "auth_token" : {
+              "type" : "string",
+              "description" : "Optional static bearer token for authenticating against the REST catalog server.",
+              "title" : "Bearer Token",
+              "airbyte_secret" : true,
+              "order" : 3
+            },
+            "credential" : {
+              "type" : "string",
+              "description" : "Optional OAuth2 client credential for the REST catalog, in the form <code>client_id:client_secret</code>.",
+              "title" : "OAuth2 Credential",
+              "airbyte_secret" : true,
+              "order" : 4
+            },
+            "scope" : {
+              "type" : "string",
+              "description" : "Optional OAuth2 scope to request when using a credential.",
+              "title" : "OAuth2 Scope",
+              "order" : 5
+            },
+            "oauth2_server_uri" : {
+              "type" : "string",
+              "description" : "Optional OAuth2 token endpoint. If unset, the REST catalog server's default token endpoint is used.",
+              "title" : "OAuth2 Server URI",
+              "order" : 6
+            }
+          },
+          "required" : [ "catalog_type", "server_uri" ]
+        } ],
+        "description" : "Specifies the type of Iceberg catalog.",
+        "title" : "Catalog Type",
+        "always_show" : true,
+        "order" : 7,
+        "type" : "object"
+      }
+    },
+    "required" : [ "azure_storage_account_name", "warehouse_location", "main_branch_name", "namespace", "catalog_type" ]
+  },
+  "supportsIncremental" : true,
+  "supportsNormalization" : false,
+  "supportsDBT" : false,
+  "supported_destination_sync_modes" : [ "overwrite", "append", "append_dedup" ]
+}
