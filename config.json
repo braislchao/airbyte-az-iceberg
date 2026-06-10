@@ -1,0 +1,15 @@
+{
+  "azure_storage_account_name": "<your-storage-account-name>",
+  "azure_storage_account_key": "<your-storage-account-key>",
+  "warehouse_location": "abfss://<container>@<storage-account>.dfs.core.windows.net/<path>",
+  "main_branch_name": "main",
+  "namespace": "default",
+  "catalog_type": {
+    "catalog_type": "REST",
+    "server_uri": "https://<lakekeeper-host>/catalog",
+    "warehouse": "<warehouse-name>",
+    "credential": "<oauth2-client-id>:<oauth2-client-secret>",
+    "scope": "api://<lakekeeper-app-id>/.default",
+    "oauth2_server_uri": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/token"
+  }
+}
