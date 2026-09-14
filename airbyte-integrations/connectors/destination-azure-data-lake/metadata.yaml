@@ -15,7 +15,7 @@ data:
     - suite: integrationTests
   connectorType: destination
   definitionId: 9e819be3-7190-43b7-a19b-d080b6a3fe46
-  dockerImageTag: 0.1.0
+  dockerImageTag: 0.1.4
   dockerRepository: airbyte/destination-azure-data-lake
   documentationUrl: https://docs.airbyte.com/integrations/destinations/azure-data-lake
   githubIssueLabel: destination-azure-data-lake

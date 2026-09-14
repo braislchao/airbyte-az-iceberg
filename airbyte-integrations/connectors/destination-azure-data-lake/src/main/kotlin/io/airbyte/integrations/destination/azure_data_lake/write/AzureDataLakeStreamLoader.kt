@@ -228,7 +228,7 @@ class AzureDataLakeStreamLoader(
                     throw e
                 }
             }
-            table.manageSnapshots().replaceBranch(mainBranchName, stagingBranchName).commit()
+            promoteStagingToMain()
 
             if (stream.isSingleGenerationTruncate()) {
                 logger.info {
@@ -241,9 +241,39 @@ class AzureDataLakeStreamLoader(
                     "Deleted obsolete generation IDs up to ${stream.minimumGenerationId - 1}. " +
                         "Pushing these updates to the '$mainBranchName' branch."
                 }
-                table.manageSnapshots().replaceBranch(mainBranchName, stagingBranchName).commit()
+                promoteStagingToMain()
             }
         }
+
+        // allStreamsComplete() is false in this deployment even for a single successful
+        // stream, so the gated block above is skipped and main is never created. Promote
+        // unconditionally as a fallback (idempotent create/fast-forward).
+        promoteStagingToMain()
+    }
+
+    /**
+     * Promotes the staging branch to the main branch so plain reads return data.
+     * Iceberg's replaceBranch requires main to already exist (it never does on the first
+     * sync), so create main at the staging snapshot when absent, else fast-forward it.
+     */
+    private fun promoteStagingToMain() {
+        table.refresh()
+        val stagingRef = table.refs()[stagingBranchName]
+        if (stagingRef == null) {
+            logger.warn { "Staging branch '$stagingBranchName' not found for ${stream.mappedDescriptor}; nothing to promote." }
+            return
+        }
+        val manageSnapshots = table.manageSnapshots()
+        if (table.refs().containsKey(mainBranchName)) {
+            logger.info { "Fast-forwarding '$mainBranchName' to '$stagingBranchName' for ${stream.mappedDescriptor}." }
+            manageSnapshots.replaceBranch(mainBranchName, stagingBranchName)
+        } else {
+            logger.info { "Creating '$mainBranchName' at staging snapshot ${stagingRef.snapshotId()} for ${stream.mappedDescriptor}." }
+            manageSnapshots.createBranch(mainBranchName, stagingRef.snapshotId())
+        }
+        manageSnapshots.commit()
+        table.refresh()
+        logger.info { "After promotion for ${stream.mappedDescriptor}: refs=${table.refs().keys}, currentSnapshot=${table.currentSnapshot()?.snapshotId()}" }
     }
 
     /**
