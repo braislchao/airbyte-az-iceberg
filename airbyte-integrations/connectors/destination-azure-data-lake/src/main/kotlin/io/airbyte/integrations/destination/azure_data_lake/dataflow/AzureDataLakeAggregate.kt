@@ -16,6 +16,7 @@ import io.airbyte.cdk.load.dataflow.transform.RecordDTO
 import io.airbyte.cdk.load.toolkits.iceberg.parquet.io.Operation
 import io.airbyte.cdk.load.toolkits.iceberg.parquet.io.RecordWrapper
 import io.airbyte.cdk.load.util.serializeToString
+import io.airbyte.integrations.destination.azure_data_lake.write.transform.coerceIntegersForIcebergType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.iceberg.Schema
 import org.apache.iceberg.Table
@@ -81,8 +82,9 @@ class AzureDataLakeAggregate(
      * knowledge of the Iceberg schema, so they can't happen in ValueCoercer (which operates in
      * Parse stage).
      *
-     * Note: Union stringification is handled by ValueCoercer (during Parse stage). Here we only
-     * handle Object/Array stringification for STRING fields.
+     * Note: Union stringification is handled by ValueCoercer (during Parse stage). Here we
+     * handle Object/Array stringification for STRING fields, and integers headed for
+     * floating-point columns (see [coerceIntegersForIcebergType]).
      */
     private fun transformForIcebergSchema(
         value: AirbyteValue,
@@ -98,7 +100,7 @@ class AzureDataLakeAggregate(
                 StringValue(value.serializeToString())
             fieldName in stringFields && value is ArrayValue ->
                 StringValue(value.serializeToString())
-            else -> value
+            else -> coerceIntegersForIcebergType(value, field.type())
         }
     }
 

@@ -97,6 +97,7 @@ data on `main`.
 
 | Version | Date       | Pull Request | Subject                                                  |
 | :------ | :--------- | :----------- | :------------------------------------------------------- |
+| 0.1.5   | 2026-09-22 |              | Fix ClassCastException writing whole numbers into `array<number>` columns. |
 | 0.1.0   | 2026-06-05 |              | Initial release: Iceberg on ADLS Gen2 with REST catalog. |
 
 </details>
