@@ -12,6 +12,7 @@ import io.mockk.mockk
 import org.apache.iceberg.CatalogProperties
 import org.apache.iceberg.CatalogUtil
 import org.apache.iceberg.azure.AzureProperties
+import org.apache.iceberg.rest.auth.OAuth2Properties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
@@ -164,5 +165,24 @@ class AzureDataLakeCatalogUtilTest {
     fun `storage account host falls back to account name when warehouse location is not abfss`() {
         val cfg = config(warehouseLocation = "not-a-uri")
         assertEquals("myaccount.dfs.core.windows.net", catalogUtil.storageAccountHost(cfg))
+    }
+
+    @Test
+    fun `client credential refreshes with client credentials, not token exchange`() {
+        val properties =
+            catalogUtil.toCatalogProperties(
+                config(restConfig = restConfig(credential = "client-id:client-secret"))
+            )
+
+        assertEquals("client-id:client-secret", properties[OAuth2Properties.CREDENTIAL])
+        assertEquals("false", properties[OAuth2Properties.TOKEN_EXCHANGE_ENABLED])
+    }
+
+    @Test
+    fun `static token leaves token exchange at the Iceberg default`() {
+        val properties =
+            catalogUtil.toCatalogProperties(config(restConfig = restConfig(authToken = "t")))
+
+        assertFalse(properties.containsKey(OAuth2Properties.TOKEN_EXCHANGE_ENABLED))
     }
 }
