@@ -52,11 +52,18 @@ class AzureDataLakeCatalogUtil(
 
         val adlsProperties = buildAdlsProperties(config)
 
+        val delegationProperties =
+            if (config.azureStorageAccountKey == null && config.azureSasToken == null) {
+                mapOf("header.X-Iceberg-Access-Delegation" to "vended-credentials")
+            } else {
+                emptyMap()
+            }
+
         return when (val catalogConfiguration = catalogConfig.catalogConfiguration) {
             is RestCatalogConfiguration ->
                 // REST properties are applied last so an explicit "warehouse" identifier can
                 // override the default warehouse location.
-                adlsProperties + buildRestProperties(catalogConfiguration)
+                adlsProperties + buildRestProperties(catalogConfiguration) + delegationProperties
         }
     }
 
