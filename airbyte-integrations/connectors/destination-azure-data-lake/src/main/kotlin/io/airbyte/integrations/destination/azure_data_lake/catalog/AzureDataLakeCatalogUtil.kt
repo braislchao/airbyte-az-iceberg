@@ -108,7 +108,10 @@ class AzureDataLakeCatalogUtil(
             // Some multi-catalog REST servers use the "warehouse" property to select the catalog.
             catalogConfig.warehouse?.let { put(CatalogProperties.WAREHOUSE_LOCATION, it) }
             catalogConfig.authToken?.let { put(OAuth2Properties.TOKEN, it) }
-            catalogConfig.credential?.let { put(OAuth2Properties.CREDENTIAL, it) }
+            catalogConfig.credential?.let {
+                put(OAuth2Properties.CREDENTIAL, it)
+                put(OAuth2Properties.TOKEN_EXCHANGE_ENABLED, "false")
+            }
             catalogConfig.scope?.let { put(OAuth2Properties.SCOPE, it) }
             catalogConfig.oauth2ServerUri?.let { put(OAuth2Properties.OAUTH2_SERVER_URI, it) }
         }
