@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-connector-v10
+  namespace: airbyte
+spec:
+  restartPolicy: Never
+  containers:
+  - name: connector
+    image: airbyte/destination-azure-data-lake:dev-v10
+    imagePullPolicy: Never
+    command: ["/airbyte/bin/destination-azure-data-lake"]
+    args:
+    - "--check"
+    - "--config"
+    - "/data/config.json"
+    volumeMounts:
+    - name: config-volume
+      mountPath: /data
+  volumes:
+  - name: config-volume
+    secret:
+      secretName: azure-connector-config
+      items:
+      - key: config.json
+        path: config.json
+

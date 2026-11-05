@@ -1,0 +1,11 @@
+{
+  "azure_storage_account_name": "factorialdatalake",
+  "warehouse_location": "abfss://factorial-datalake-production@factorialdatalake.dfs.core.windows.net/lakekeeper-local-test",
+  "main_branch_name": "main",
+  "namespace": "default",
+  "catalog_type": {
+    "catalog_type": "REST",
+    "server_uri": "http://lakekeeper.airbyte.svc.cluster.local:8181/catalog",
+    "warehouse": "test_warehouse"
+  }
+}
