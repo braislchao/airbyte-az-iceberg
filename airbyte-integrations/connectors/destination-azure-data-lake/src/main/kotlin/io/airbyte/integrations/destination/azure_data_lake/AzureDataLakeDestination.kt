@@ -4,6 +4,7 @@
 
 package io.airbyte.integrations.destination.azure_data_lake
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.airbyte.cdk.AirbyteDestinationRunner
@@ -30,6 +31,9 @@ object AzureDataLakeDestination {
             translatedArgs
         }
 
+        if (translatedArgs.contains("--write")) {
+            System.setIn(StreamStatusLoggingInputStream(System.`in`))
+        }
         AirbyteDestinationRunner.run(*finalArgs)
     }
 
@@ -45,22 +49,7 @@ object AzureDataLakeDestination {
         val root = mapper.readTree(originalFile) as ObjectNode
         val streams = root.get("streams") ?: return args
 
-        var modified = false
-        streams.forEach { configured ->
-            val node = configured as ObjectNode
-            if (!node.has("generation_id") || node.get("generation_id").isNull) {
-                node.put("generation_id", 0L)
-                modified = true
-            }
-            if (!node.has("minimum_generation_id") || node.get("minimum_generation_id").isNull) {
-                node.put("minimum_generation_id", 0L)
-                modified = true
-            }
-            if (!node.has("sync_id") || node.get("sync_id").isNull) {
-                node.put("sync_id", 0L)
-                modified = true
-            }
-        }
+        val modified = patchStreams(streams, System.currentTimeMillis() / 1000)
 
         if (!modified) return args
 
@@ -72,5 +61,33 @@ object AzureDataLakeDestination {
         val newArgs = args.toMutableList()
         newArgs[catalogIdx + 1] = patchedFile.absolutePath
         return newArgs.toTypedArray()
+    }
+
+    internal fun patchStreams(streams: JsonNode, overwriteGenerationId: Long): Boolean {
+        var modified = false
+        streams.forEach { configured ->
+            val node = configured as ObjectNode
+            val missingGeneration =
+                !node.has("generation_id") || node.get("generation_id").isNull
+            val generation =
+                if (missingGeneration && node.path("destination_sync_mode").asText() == "overwrite") {
+                    overwriteGenerationId
+                } else {
+                    0L
+                }
+            if (missingGeneration) {
+                node.put("generation_id", generation)
+                modified = true
+            }
+            if (!node.has("minimum_generation_id") || node.get("minimum_generation_id").isNull) {
+                node.put("minimum_generation_id", generation)
+                modified = true
+            }
+            if (!node.has("sync_id") || node.get("sync_id").isNull) {
+                node.put("sync_id", 0L)
+                modified = true
+            }
+        }
+        return modified
     }
 }
